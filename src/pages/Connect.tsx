@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { phylloApi } from '../lib/api';
+import { phylloApi, insightsApi } from '../lib/api';
 
 // Declare global PhylloConnect for TypeScript
 declare global {
@@ -87,15 +87,28 @@ export const Connect = () => {
       // Initialize Phyllo Connect with v2 API
       const phylloConnect = window.PhylloConnect.initialize({
         clientDisplayName: 'Phyllo Test App',
-        environment: 'staging', // Use staging environment (NOT sandbox)
+        environment: 'staging',
         userId: user?.id, // Use user.id directly since user_id doesn't exist on tokenResponse
         token: tokenResponse.sdk_token,
         workPlatformId: undefined // Optional: specify if you want to connect to specific platform
       });
       
       // Set up event listeners
-      phylloConnect.on('accountConnected', (accountId: string, workPlatformId: string, userId: string) => {
+      phylloConnect.on('accountConnected', async (accountId: string, workPlatformId: string, userId: string) => {
         console.log('Account connected:', { accountId, workPlatformId, userId });
+        
+        // Test call to fetch audience demographics immediately after connection
+        try {
+          const res = await insightsApi.getAudience(accountId);
+          if (res.audience && Object.keys(res.audience).length > 0) {
+            console.log("User demographics:", res.audience);
+          } else {
+            console.log("No demographics available yet");
+          }
+        } catch (error) {
+          console.log("No demographics available yet - this is normal for newly connected accounts");
+        }
+        
         setLoading(false);
         loadAccounts(); // Refresh accounts list
       });

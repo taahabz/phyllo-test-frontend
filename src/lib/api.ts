@@ -87,3 +87,4 @@ export const insightsApi = {
     return response.data;
   },
 };
+
